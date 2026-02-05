@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 
-export default function CopyButton({ text, className }: { text: string; className?: string }) {
+export default function CopyButton({ text, label = 'Copy to clipboard', className }: { text: string; label?: string; className?: string }) {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
@@ -33,7 +33,7 @@ export default function CopyButton({ text, className }: { text: string; classNam
             <path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" />
             <path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z" />
           </svg>
-          Copy to clipboard
+          {label}
         </>
       )}
     </button>
