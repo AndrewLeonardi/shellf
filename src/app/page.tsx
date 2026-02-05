@@ -59,7 +59,7 @@ export default async function Home() {
             </p>
             <div className="flex items-center gap-2 mb-4">
               <span className="text-[#5A9A9A] text-xs font-medium uppercase tracking-wide">1.</span>
-              <span className="text-[#B8D8D8] text-sm">Run this in your agent&apos;s terminal</span>
+              <span className="text-[#B8D8D8] text-sm">Ask your AI to run this command</span>
             </div>
             <InlineCopyCommand text="npx shellf@latest" />
             <div className="flex items-center gap-2 mt-5 mb-1">
