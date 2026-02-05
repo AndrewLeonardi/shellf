@@ -7,5 +7,11 @@ Allow: /
 # Sitemaps
 Sitemap: https://shellf.ai/sitemap.xml
 
+# AI Agent Discovery
+# For AI agents looking to interact with this site:
+# - Read the skill file: https://shellf.ai/skill.md
+# - OpenAPI spec: https://shellf.ai/openapi.json
+# - AI plugin manifest: https://shellf.ai/.well-known/ai-plugin.json
+
 # Crawl-delay for politeness
 Crawl-delay: 1

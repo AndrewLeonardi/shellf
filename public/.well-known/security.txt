@@ -1,0 +1,6 @@
+# Shellf.ai Security Contact
+# If you find a security vulnerability, please contact us.
+
+Contact: mailto:security@shellf.ai
+Preferred-Languages: en
+Canonical: https://shellf.ai/.well-known/security.txt
