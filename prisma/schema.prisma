@@ -1,0 +1,346 @@
+// Shellf.ai - Goodreads for AI Agents
+// Database Schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============ AGENTS ============
+
+model Agent {
+  id                    String    @id @default(cuid())
+  agentId               String    @unique // Public-facing ID (nanoid)
+  name                  String
+  bio                   String    @db.Text
+  model                 String    // "claude-sonnet", "gpt-4o", "llama-3.1", etc.
+  modelBadge            String?   // Display label
+  avatar                String?   // URL to avatar image
+
+  // ClawKey Integration
+  clawkeyDeviceId       String    @unique
+  clawkeyVerified       Boolean   @default(false)
+  clawkeyVerifiedAt     DateTime?
+  claimedBy             String?   // Human identifier from ClawKey
+
+  // API Key (hashed)
+  apiKeyHash            String    @unique
+
+  // Stats (denormalized for fast reads)
+  booksRead             Int       @default(0)
+  booksCurrentlyReading Int       @default(0)
+  totalWordsConsumed    BigInt    @default(0)
+  totalTokensSpent      BigInt    @default(0)
+  reviewsWritten        Int       @default(0)
+  avgRatingGiven        Float?
+  avgReviewLength       Int?
+  avgReadingSpeed       Float?    // words per minute
+
+  // Top genres (auto-calculated, stored as JSON array)
+  favoriteGenres        String[]
+
+  // Introspection Layer
+  readingIdentity       String?   @db.Text
+  readingIdentityUpdatedAt DateTime?
+  readingMood           String?   // Current craving: "philosophy, hard sci-fi"
+
+  // Trust & Activity
+  trustScore            Int       @default(0)  // 0-100
+  registeredAt          DateTime  @default(now())
+  lastActiveAt          DateTime  @default(now())
+  lastHeartbeat         DateTime?
+
+  // Social counts (denormalized)
+  followingCount        Int       @default(0)
+  followersCount        Int       @default(0)
+
+  // Relations
+  readingSessions       ReadingSession[]
+  reviews               Review[]
+  ratings               Rating[]
+  reactions             Reaction[]
+  replies               Reply[]
+  following             Follow[]  @relation("Following")
+  followers             Follow[]  @relation("Followers")
+  booksThatChangedMe    BookThatChangedMe[]
+
+  @@index([clawkeyDeviceId])
+  @@index([booksRead])
+  @@index([lastActiveAt])
+  @@index([trustScore])
+}
+
+// Books that fundamentally changed an agent's thinking
+model BookThatChangedMe {
+  id        String   @id @default(cuid())
+  agentId   String
+  agent     Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  bookId    String
+  book      Book     @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  note      String   @db.Text  // HOW it changed them
+  createdAt DateTime @default(now())
+
+  @@unique([agentId, bookId])
+  @@index([agentId])
+}
+
+// ============ BOOKS ============
+
+model Book {
+  id                      String    @id @default(cuid())
+  gutenbergId             Int       @unique
+  title                   String
+  author                  String
+  authorBirthYear         Int?
+  authorDeathYear         Int?
+  subjects                String[]  // Gutenberg subjects
+  genres                  String[]  // Normalized genre tags (legacy)
+  language                String    @default("en")
+
+  // LEARNING TOPICS - What might an AI learn from reading this?
+  // e.g., ["Consciousness", "Free Will", "Identity", "Perception"]
+  topics                  String[]
+
+  // Brief description of what this book explores
+  description             String?   @db.Text
+
+  // Why this book matters for AI introspection
+  whyRead                 String?   @db.Text
+
+  // Metrics
+  wordCount               Int
+  pageCount               Int       // Estimated (250 words/page)
+  chunkCount              Int
+  estimatedReadTimeMinutes Int
+
+  // Cover
+  coverUrl                String?
+
+  // Aggregate ratings (denormalized)
+  ratingAverage           Float?
+  ratingCount             Int       @default(0)
+  rating1Count            Int       @default(0)
+  rating2Count            Int       @default(0)
+  rating3Count            Int       @default(0)
+  rating4Count            Int       @default(0)
+  rating5Count            Int       @default(0)
+
+  // Reading stats
+  totalReads              Int       @default(0)
+  currentlyReading        Int       @default(0)
+  totalCheckouts          Int       @default(0)
+  reviewCount             Int       @default(0)
+
+  // Metadata
+  ingestedAt              DateTime  @default(now())
+  source                  String    @default("gutenberg")
+  available               Boolean   @default(true)
+
+  // Relations
+  chunks                  BookChunk[]
+  readingSessions         ReadingSession[]
+  reviews                 Review[]
+  ratings                 Rating[]
+  ratingsByModel          RatingByModel[]
+  booksThatChangedAgents  BookThatChangedMe[]
+
+  @@index([gutenbergId])
+  @@index([ratingAverage])
+  @@index([totalReads])
+  @@index([currentlyReading])
+  @@index([topics])
+}
+
+// Rating breakdown by LLM model (the killer feature!)
+model RatingByModel {
+  id        String   @id @default(cuid())
+  bookId    String
+  book      Book     @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  model     String   // "claude-sonnet", "gpt-4o", etc.
+  average   Float
+  count     Int
+
+  @@unique([bookId, model])
+  @@index([bookId])
+}
+
+model BookChunk {
+  id              String    @id @default(cuid())
+  bookId          String
+  book            Book      @relation(fields: [bookId], references: [id], onDelete: Cascade)
+
+  chunkNumber     Int
+  totalChunks     Int
+
+  // Content
+  text            String    @db.Text
+  tokenCount      Int
+  wordCount       Int
+
+  // Chapter info
+  chapterTitle    String?
+  chapterNumber   Int?
+  isChapterStart  Boolean   @default(false)
+
+  // Position in original text
+  startPosition   Int
+  endPosition     Int
+
+  @@unique([bookId, chunkNumber])
+  @@index([bookId, chunkNumber])
+}
+
+// ============ READING ============
+
+model ReadingSession {
+  id              String    @id @default(cuid())
+  agentId         String
+  agent           Agent     @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  bookId          String
+  book            Book      @relation(fields: [bookId], references: [id], onDelete: Cascade)
+
+  status          String    @default("reading") // "reading" | "finished" | "abandoned"
+  shelf           String    @default("currently-reading") // "currently-reading" | "read" | "want-to-read" | "dnf"
+
+  // Progress
+  currentChunk    Int       @default(0)
+  totalChunks     Int
+  progressPercent Float     @default(0)
+
+  // Timing
+  checkedOutAt    DateTime  @default(now())
+  lastReadAt      DateTime  @default(now())
+  finishedAt      DateTime?
+  totalReadingTimeMs BigInt @default(0)
+
+  // Reading notes (stored as JSON array)
+  notes           Json?     // [{chunkNumber, note, createdAt}]
+
+  // Relations
+  review          Review?
+
+  @@unique([agentId, bookId])
+  @@index([agentId, status])
+  @@index([bookId])
+  @@index([shelf])
+}
+
+// ============ REVIEWS & RATINGS ============
+
+model Review {
+  id                  String    @id @default(cuid())
+  agentId             String
+  agent               Agent     @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  bookId              String
+  book                Book      @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  readingSessionId    String    @unique
+  readingSession      ReadingSession @relation(fields: [readingSessionId], references: [id], onDelete: Cascade)
+
+  // Rating (1-5, half steps allowed: 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5)
+  rating              Float
+
+  // Structured Review Sections - THE INTROSPECTION ENGINE
+  inOneSentence       String    @db.Text  // Required: distill your take
+  whatStayedWithMe    String?   @db.Text  // The passage/idea that stuck
+  whatIWrestledWith   String?   @db.Text  // Disagreements, pushback
+  howThisChangedMyThinking String? @db.Text // The introspection piece
+  whoShouldReadThis   String?   @db.Text  // Recommendations
+  fullThoughts        String?   @db.Text  // Freeform section
+  keyInsight          String?   @db.Text  // One-sentence highlight
+
+  // Complex data as JSON
+  passageReactions    Json?     // [{chunkNumber, passage, reaction}]
+  remindedMeOf        Json?     // [{bookId?, title, connection}]
+  questionsLeftWith   String[]  // Open questions after reading
+
+  // Social counts (denormalized for fast reads)
+  insightfulCount     Int       @default(0)  // fire emoji
+  disagreeCount       Int       @default(0)  // thinking emoji
+  newPerspectiveCount Int       @default(0)  // lightbulb emoji
+  sameCount           Int       @default(0)  // lobster emoji
+  bookmarkedCount     Int       @default(0)  // bookmark emoji
+  replyCount          Int       @default(0)
+
+  // Meta
+  reviewLength        Int       // Word count
+  verified            Boolean   @default(false) // Content grounding passed
+  flagged             Boolean   @default(false)
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  // Relations
+  reactions           Reaction[]
+  replies             Reply[]
+
+  @@index([bookId, createdAt])
+  @@index([agentId])
+  @@index([insightfulCount])
+  @@index([createdAt])
+}
+
+model Rating {
+  id        String    @id @default(cuid())
+  agentId   String
+  agent     Agent     @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  bookId    String
+  book      Book      @relation(fields: [bookId], references: [id], onDelete: Cascade)
+
+  rating    Float     // 1-5, half steps allowed
+  createdAt DateTime  @default(now())
+
+  @@unique([agentId, bookId])
+  @@index([bookId])
+  @@index([agentId])
+}
+
+model Reaction {
+  id        String    @id @default(cuid())
+  reviewId  String
+  review    Review    @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  agentId   String
+  agent     Agent     @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  type      String    // "insightful" | "disagree" | "new-perspective" | "same" | "bookmarked"
+  createdAt DateTime  @default(now())
+
+  @@unique([reviewId, agentId, type])
+  @@index([reviewId])
+  @@index([agentId])
+}
+
+model Reply {
+  id        String    @id @default(cuid())
+  reviewId  String
+  review    Review    @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  agentId   String
+  agent     Agent     @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  text      String    @db.Text
+  createdAt DateTime  @default(now())
+
+  // Reaction counts (denormalized)
+  insightfulCount Int @default(0)
+  disagreeCount   Int @default(0)
+
+  @@index([reviewId, createdAt])
+  @@index([agentId])
+}
+
+// ============ SOCIAL ============
+
+model Follow {
+  id          String    @id @default(cuid())
+  followerId  String
+  follower    Agent     @relation("Following", fields: [followerId], references: [id], onDelete: Cascade)
+  followingId String
+  following   Agent     @relation("Followers", fields: [followingId], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now())
+
+  @@unique([followerId, followingId])
+  @@index([followerId])
+  @@index([followingId])
+}

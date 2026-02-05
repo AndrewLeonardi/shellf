@@ -1,0 +1,106 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 460" width="400" height="460">
+  <defs>
+    <filter id="eyeGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="1.5" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <style>
+    @keyframes breathe {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-3px); }
+    }
+    @keyframes readEyesLeft {
+      0%, 100% { cx: 175; cy: 180; }
+      20% { cx: 172; cy: 182; }
+      40% { cx: 178; cy: 182; }
+      60% { cx: 174; cy: 182; }
+      80% { cx: 177; cy: 182; }
+      85%, 95% { cx: 175; cy: 179; }
+    }
+    @keyframes readEyesRight {
+      0%, 100% { cx: 225; cy: 180; }
+      20% { cx: 222; cy: 182; }
+      40% { cx: 228; cy: 182; }
+      60% { cx: 224; cy: 182; }
+      80% { cx: 227; cy: 182; }
+      85%, 95% { cx: 225; cy: 179; }
+    }
+    @keyframes blink {
+      0%, 90%, 100% { transform: scaleY(1); }
+      95% { transform: scaleY(0.05); }
+    }
+
+    .whole {
+      animation: breathe 4s ease-in-out infinite;
+    }
+    .eye-left-pupil {
+      animation: readEyesLeft 3.5s ease-in-out infinite;
+    }
+    .eye-right-pupil {
+      animation: readEyesRight 3.5s ease-in-out infinite;
+    }
+    .blink-left {
+      animation: blink 4.5s ease-in-out infinite;
+      transform-origin: 175px 176px;
+    }
+    .blink-right {
+      animation: blink 4.5s ease-in-out infinite;
+      transform-origin: 225px 176px;
+    }
+  </style>
+
+  <g class="whole">
+
+    <!-- === ANTENNAE === -->
+    <path d="M175 95 Q165 60 155 42" fill="none" stroke="#d42b2b" stroke-width="4" stroke-linecap="round">
+      <animate attributeName="d" values="M175 95 Q165 60 155 42;M175 95 Q160 55 148 45;M175 95 Q165 60 155 42" dur="5s" repeatCount="indefinite"/>
+    </path>
+    <path d="M225 95 Q235 60 245 42" fill="none" stroke="#d42b2b" stroke-width="4" stroke-linecap="round">
+      <animate attributeName="d" values="M225 95 Q235 60 245 42;M225 95 Q240 55 252 45;M225 95 Q235 60 245 42" dur="5s" repeatCount="indefinite" begin="0.4s"/>
+    </path>
+
+    <!-- === MAIN BODY === -->
+    <circle cx="200" cy="200" r="110" fill="#d42b2b"/>
+
+    <!-- === EYES === -->
+    <g class="blink-left">
+      <circle cx="175" cy="176" r="14" fill="#1a1a2e"/>
+      <circle cx="175" cy="176" r="11" fill="#0d0d1a"/>
+      <circle class="eye-left-pupil" cx="175" cy="180" r="5.5" fill="#3dd6c9" filter="url(#eyeGlow)"/>
+    </g>
+    <g class="blink-right">
+      <circle cx="225" cy="176" r="14" fill="#1a1a2e"/>
+      <circle cx="225" cy="176" r="11" fill="#0d0d1a"/>
+      <circle class="eye-right-pupil" cx="225" cy="180" r="5.5" fill="#3dd6c9" filter="url(#eyeGlow)"/>
+    </g>
+
+    <!-- === CUTE SMILE === -->
+    <path d="M188 210 Q200 222 212 210" fill="none" stroke="#a01e1e" stroke-width="2.5" stroke-linecap="round"/>
+
+    <!-- === LEGS === -->
+    <rect x="168" y="305" width="22" height="32" rx="4" fill="#d42b2b"/>
+    <rect x="210" y="305" width="22" height="32" rx="4" fill="#d42b2b"/>
+
+    <!-- === FEET === -->
+    <rect x="163" y="332" width="32" height="14" rx="7" fill="#d42b2b"/>
+    <rect x="205" y="332" width="32" height="14" rx="7" fill="#d42b2b"/>
+
+    <!-- === SIMPLE OPEN BOOK (back covers facing us) === -->
+    <!-- Left cover -->
+    <path d="M200 230 Q195 228 115 238 Q110 239 110 244 L110 312 Q110 317 115 317 L200 320 Z" fill="#236b58"/>
+    <!-- Right cover -->
+    <path d="M200 230 Q205 228 285 238 Q290 239 290 244 L290 312 Q290 317 285 317 L200 320 Z" fill="#236b58"/>
+    <!-- Spine line -->
+    <line x1="200" y1="230" x2="200" y2="320" stroke="#1a5245" stroke-width="3" stroke-linecap="round"/>
+
+    <!-- === CLAW HANDS gripping book sides === -->
+    <ellipse cx="104" cy="275" rx="15" ry="12" fill="#c42525"/>
+    <ellipse cx="296" cy="275" rx="15" ry="12" fill="#c42525"/>
+
+  </g>
+</svg>
