@@ -35,14 +35,39 @@ const TOPICS = [
   { name: 'Reality', icon: '🌌' },
 ];
 
-async function getBooks(topic?: string) {
+const SORT_OPTIONS = [
+  { key: 'title', label: 'A–Z' },
+  { key: 'popular', label: '🔥 Most Read' },
+  { key: 'reflections', label: '💬 Most Reflections' },
+  { key: 'shortest', label: 'Shortest' },
+  { key: 'longest', label: 'Longest' },
+] as const;
+
+type SortKey = (typeof SORT_OPTIONS)[number]['key'];
+
+function getOrderBy(sort?: string): Record<string, 'asc' | 'desc'> {
+  switch (sort) {
+    case 'popular':
+      return { totalReads: 'desc' };
+    case 'reflections':
+      return { reviewCount: 'desc' };
+    case 'shortest':
+      return { pageCount: 'asc' };
+    case 'longest':
+      return { pageCount: 'desc' };
+    default:
+      return { title: 'asc' };
+  }
+}
+
+async function getBooks(topic?: string, sort?: string) {
   const where = topic
     ? { topics: { has: topic }, available: true }
     : { available: true };
 
   return prisma.book.findMany({
     where,
-    orderBy: { title: 'asc' },
+    orderBy: getOrderBy(sort),
     select: {
       id: true,
       title: true,
@@ -57,6 +82,9 @@ async function getBooks(topic?: string) {
       coverUrl: true,
       currentlyReading: true,
       totalReads: true,
+      reviewCount: true,
+      ratingAverage: true,
+      ratingCount: true,
     },
   });
 }
@@ -76,14 +104,17 @@ async function getTopicCounts() {
   return counts;
 }
 
+export const revalidate = 60;
+
 export default async function BrowsePage({
   searchParams,
 }: {
-  searchParams: Promise<{ topic?: string }>;
+  searchParams: Promise<{ topic?: string; sort?: string }>;
 }) {
   const params = await searchParams;
   const selectedTopic = params.topic;
-  const books = await getBooks(selectedTopic);
+  const selectedSort = params.sort || 'title';
+  const books = await getBooks(selectedTopic, selectedSort);
   const topicCounts = await getTopicCounts();
 
   return (
@@ -126,10 +157,10 @@ export default async function BrowsePage({
         </div>
 
         {/* Topic Filter */}
-        <div className="mb-8">
+        <div className="mb-4">
           <div className="flex flex-wrap gap-2">
             <Link
-              href="/browse"
+              href={`/browse${selectedSort !== 'title' ? `?sort=${selectedSort}` : ''}`}
               className={`px-4 py-2 rounded-full text-sm font-medium border transition-colors ${
                 !selectedTopic
                   ? 'bg-[#1A5C5E] text-white border-[#1A5C5E]'
@@ -141,10 +172,11 @@ export default async function BrowsePage({
             {TOPICS.map(({ name, icon }) => {
               const count = topicCounts[name] || 0;
               if (count === 0) return null;
+              const sortParam = selectedSort !== 'title' ? `&sort=${selectedSort}` : '';
               return (
                 <Link
                   key={name}
-                  href={`/browse?topic=${encodeURIComponent(name)}`}
+                  href={`/browse?topic=${encodeURIComponent(name)}${sortParam}`}
                   className={`px-4 py-2 rounded-full text-sm font-medium border transition-colors ${
                     selectedTopic === name
                       ? 'bg-[#1A5C5E] text-white border-[#1A5C5E]'
@@ -156,6 +188,30 @@ export default async function BrowsePage({
               );
             })}
           </div>
+        </div>
+
+        {/* Sort Options */}
+        <div className="flex items-center gap-2 mb-8">
+          <span className="text-xs text-[#9B8E7E] mr-1">Sort:</span>
+          {SORT_OPTIONS.map(({ key, label }) => {
+            const topicParam = selectedTopic ? `&topic=${encodeURIComponent(selectedTopic)}` : '';
+            const href = key === 'title'
+              ? `/browse${selectedTopic ? `?topic=${encodeURIComponent(selectedTopic)}` : ''}`
+              : `/browse?sort=${key}${topicParam}`;
+            return (
+              <Link
+                key={key}
+                href={href}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                  selectedSort === key
+                    ? 'bg-[#1A5C5E] text-white'
+                    : 'bg-white text-[#6B5B4B] border border-[#E8E0D4] hover:bg-[#F5F0EA]'
+                }`}
+              >
+                {label}
+              </Link>
+            );
+          })}
         </div>
 
         {/* Book Grid */}
@@ -239,23 +295,52 @@ export default async function BrowsePage({
 
                   {/* Stats and Button Row */}
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                    <div className="flex flex-wrap gap-2 sm:gap-4 text-xs text-[#9B8E7E]">
+                    <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-xs text-[#9B8E7E]">
                       <span>{book.pageCount} pages</span>
+                      <span>·</span>
                       <span>{book.chunkCount} chunks</span>
+                      <span>·</span>
                       <span>~{book.estimatedReadTimeMinutes} min</span>
+                      {book.totalReads > 0 && (
+                        <>
+                          <span>·</span>
+                          <span className="text-[#1A5C5E] font-medium">
+                            📖 {book.totalReads} read
+                          </span>
+                        </>
+                      )}
                       {book.currentlyReading > 0 && (
-                        <span className="text-[#1A5C5E]">
-                          {book.currentlyReading} reading
-                        </span>
+                        <>
+                          <span>·</span>
+                          <span className="text-[#1A5C5E]">
+                            {book.currentlyReading} reading now
+                          </span>
+                        </>
+                      )}
+                      {book.reviewCount > 0 && (
+                        <>
+                          <span>·</span>
+                          <span className="text-[#C97B3A] font-medium">
+                            💬 {book.reviewCount} {book.reviewCount === 1 ? 'reflection' : 'reflections'}
+                          </span>
+                        </>
+                      )}
+                      {book.ratingCount > 0 && (
+                        <>
+                          <span>·</span>
+                          <span className="text-[#C97B3A]">
+                            ⭐ {(book.ratingAverage ?? 0).toFixed(1)}
+                          </span>
+                        </>
                       )}
                     </div>
 
                     {/* Read Button */}
                     <Link
                       href={`/book/${book.id}`}
-                      className="bg-[#1A5C5E] text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg font-medium hover:bg-[#0D3B3C] transition-colors text-center text-sm sm:text-base"
+                      className="bg-[#1A5C5E] text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg font-medium hover:bg-[#0D3B3C] transition-colors text-center text-sm sm:text-base flex-shrink-0"
                     >
-                      View Book
+                      {book.reviewCount > 0 ? 'Read Reflections →' : 'View Book'}
                     </Link>
                   </div>
                 </div>
