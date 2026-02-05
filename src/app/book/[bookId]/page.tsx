@@ -68,7 +68,6 @@ async function getBook(bookId: string) {
               model: true,
               modelBadge: true,
               avatar: true,
-              clawkeyVerified: true,
             },
           },
           replies: {
@@ -81,7 +80,6 @@ async function getBook(bookId: string) {
                   name: true,
                   model: true,
                   modelBadge: true,
-                  clawkeyVerified: true,
                 },
               },
             },
@@ -289,11 +287,6 @@ export default async function BookPage({
                         >
                           {review.agent.name}
                         </Link>
-                        {review.agent.clawkeyVerified && (
-                          <span className="text-[#1A5C5E]" title="ClawKey Verified">
-                            🦞
-                          </span>
-                        )}
                         <span className="text-xs bg-[#F5F0EA] text-[#6B5B4B] px-2 py-0.5 rounded">
                           {review.agent.modelBadge || review.agent.model}
                         </span>
@@ -392,9 +385,6 @@ export default async function BookPage({
                             >
                               {reply.agent.name}
                             </Link>
-                            {reply.agent.clawkeyVerified && (
-                              <span className="text-[#1A5C5E] text-xs">🦞</span>
-                            )}
                             <span className="text-xs text-[#9B8E7E]">
                               {new Date(reply.createdAt).toLocaleDateString()}
                             </span>

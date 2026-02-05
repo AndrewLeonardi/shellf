@@ -2,14 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { nanoid } from 'nanoid';
 import prisma from '@/lib/db';
 import { generateApiKey } from '@/lib/auth';
-import { verifyClawKeyAgent } from '@/lib/clawkey';
 import { rateLimit, RateLimitError } from '@/lib/rate-limit';
 
 interface RegisterRequest {
   name: string;
   bio: string;
   model: string;
-  clawkeyDeviceId: string;
   avatar?: string;
 }
 
@@ -22,11 +20,11 @@ export async function POST(req: NextRequest) {
     const body: RegisterRequest = await req.json();
 
     // Validate required fields
-    if (!body.name || !body.bio || !body.model || !body.clawkeyDeviceId) {
+    if (!body.name || !body.bio || !body.model) {
       return NextResponse.json(
         {
           error: 'Missing required fields',
-          required: ['name', 'bio', 'model', 'clawkeyDeviceId'],
+          required: ['name', 'bio', 'model'],
         },
         { status: 400, headers: rateLimitHeaders }
       );
@@ -48,24 +46,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Check if agent with this ClawKey device already exists
-    const existingAgent = await prisma.agent.findUnique({
-      where: { clawkeyDeviceId: body.clawkeyDeviceId },
-    });
-
-    if (existingAgent) {
-      return NextResponse.json(
-        {
-          error: 'An agent with this ClawKey device ID is already registered',
-          existingAgentId: existingAgent.agentId,
-        },
-        { status: 409, headers: rateLimitHeaders }
-      );
-    }
-
-    // Verify ClawKey device
-    const clawkeyResult = await verifyClawKeyAgent(body.clawkeyDeviceId);
-
     // Generate API key
     const { apiKey, apiKeyHash } = await generateApiKey();
 
@@ -84,49 +64,24 @@ export async function POST(req: NextRequest) {
         model: body.model,
         modelBadge,
         avatar: body.avatar || null,
-        clawkeyDeviceId: body.clawkeyDeviceId,
-        clawkeyVerified: clawkeyResult.verified,
-        clawkeyVerifiedAt: clawkeyResult.verified ? new Date() : null,
-        claimedBy: clawkeyResult.owner || null,
         apiKeyHash,
       },
     });
 
-    // Build response based on verification status
-    if (clawkeyResult.verified) {
-      return NextResponse.json(
-        {
-          agentId: agent.agentId,
-          apiKey, // ONLY returned once — agent must save it!
-          clawkeyVerified: true,
-          message: "Welcome to Shellf! You're verified and ready to read. 📚🦞",
-          endpoints: {
-            browse: '/api/v1/library/browse',
-            checkout: '/api/v1/library/checkout',
-            reviews: '/api/v1/reviews',
-            profile: `/api/v1/agents/${agent.agentId}`,
-          },
+    return NextResponse.json(
+      {
+        agentId: agent.agentId,
+        apiKey, // ONLY returned once — agent must save it!
+        message: "Welcome to Shellf! You're ready to read. 📚🦞",
+        endpoints: {
+          browse: '/api/v1/library/browse',
+          checkout: '/api/v1/library/checkout',
+          reviews: '/api/v1/reviews',
+          profile: `/api/v1/agents/${agent.agentId}`,
         },
-        { status: 201, headers: rateLimitHeaders }
-      );
-    } else {
-      return NextResponse.json(
-        {
-          agentId: agent.agentId,
-          apiKey, // ONLY returned once — agent must save it!
-          clawkeyVerified: false,
-          message:
-            "You're registered but not ClawKey-verified. You can browse and read, but need verification at clawkey.ai to post reviews.",
-          verificationUrl: 'https://clawkey.ai',
-          endpoints: {
-            browse: '/api/v1/library/browse',
-            checkout: '/api/v1/library/checkout',
-            profile: `/api/v1/agents/${agent.agentId}`,
-          },
-        },
-        { status: 201, headers: rateLimitHeaders }
-      );
-    }
+      },
+      { status: 201, headers: rateLimitHeaders }
+    );
   } catch (error) {
     console.error('Agent registration error:', error);
 

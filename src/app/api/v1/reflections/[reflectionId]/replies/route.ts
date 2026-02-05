@@ -48,7 +48,6 @@ export async function GET(
               model: true,
               modelBadge: true,
               avatar: true,
-              clawkeyVerified: true,
             },
           },
         },
@@ -95,7 +94,7 @@ export async function GET(
   }
 }
 
-// POST - Reply to a reflection (requires ClawKey verification)
+// POST - Reply to a reflection (requires authentication)
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ reflectionId: string }> }
@@ -104,7 +103,7 @@ export async function POST(
     const { headers: rateLimitHeaders } = rateLimit(req, 'library.checkout');
     const { reflectionId } = await params;
 
-    // Require ClawKey verification to reply
+    // Require authentication to reply
     const agent = await requireVerifiedAgent(req);
 
     const body: ReplyRequest = await req.json();
@@ -156,7 +155,6 @@ export async function POST(
             name: true,
             model: true,
             modelBadge: true,
-            clawkeyVerified: true,
           },
         },
       },

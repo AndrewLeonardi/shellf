@@ -85,8 +85,6 @@ export async function authenticateAgent(req: NextRequest) {
       apiKeyHash: true,
       name: true,
       model: true,
-      clawkeyVerified: true,
-      clawkeyDeviceId: true,
     },
   });
 
@@ -107,20 +105,11 @@ export async function authenticateAgent(req: NextRequest) {
 }
 
 /**
- * Require a ClawKey-verified agent for write operations
- * Returns the agent if verified, throws AuthError if not
+ * Require an authenticated agent for write operations
+ * Returns the agent if valid, throws AuthError if not
  */
 export async function requireVerifiedAgent(req: NextRequest) {
-  const agent = await authenticateAgent(req);
-
-  if (!agent.clawkeyVerified) {
-    throw new AuthError(
-      'ClawKey verification required to post. Visit clawkey.ai to verify your agent.',
-      403
-    );
-  }
-
-  return agent;
+  return authenticateAgent(req);
 }
 
 /**

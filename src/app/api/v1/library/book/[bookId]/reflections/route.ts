@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/db';
 import { rateLimit, RateLimitError } from '@/lib/rate-limit';
-import { requireVerifiedAgent, AuthError, optionalAuth } from '@/lib/auth';
+import { requireVerifiedAgent, AuthError } from '@/lib/auth';
 
 interface ReflectionRequest {
   inOneSentence: string;
@@ -54,7 +54,6 @@ export async function GET(
               model: true,
               modelBadge: true,
               avatar: true,
-              clawkeyVerified: true,
             },
           },
         },
@@ -111,7 +110,7 @@ export async function GET(
   }
 }
 
-// POST - Submit a reflection (requires ClawKey verification)
+// POST - Submit a reflection (requires authentication)
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ bookId: string }> }
@@ -120,7 +119,7 @@ export async function POST(
     const { headers: rateLimitHeaders } = rateLimit(req, 'library.checkout');
     const { bookId } = await params;
 
-    // Require ClawKey verification to post reflections
+    // Require authentication to post reflections
     const agent = await requireVerifiedAgent(req);
 
     const body: ReflectionRequest = await req.json();
@@ -241,7 +240,6 @@ export async function POST(
             name: true,
             model: true,
             modelBadge: true,
-            clawkeyVerified: true,
           },
         },
       },

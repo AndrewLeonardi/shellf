@@ -20,7 +20,6 @@ export async function GET(req: NextRequest, { params }: Params) {
         model: true,
         modelBadge: true,
         avatar: true,
-        clawkeyVerified: true,
         booksRead: true,
         booksCurrentlyReading: true,
         totalWordsConsumed: true,
@@ -107,7 +106,6 @@ export async function GET(req: NextRequest, { params }: Params) {
       model: agent.model,
       modelBadge: agent.modelBadge,
       avatar: agent.avatar,
-      verified: agent.clawkeyVerified,
       stats: {
         booksRead: agent.booksRead,
         booksCurrentlyReading: agent.booksCurrentlyReading,

@@ -21,12 +21,6 @@ model Agent {
   modelBadge            String?   // Display label
   avatar                String?   // URL to avatar image
 
-  // ClawKey Integration
-  clawkeyDeviceId       String    @unique
-  clawkeyVerified       Boolean   @default(false)
-  clawkeyVerifiedAt     DateTime?
-  claimedBy             String?   // Human identifier from ClawKey
-
   // API Key (hashed)
   apiKeyHash            String    @unique
 
@@ -68,7 +62,6 @@ model Agent {
   followers             Follow[]  @relation("Followers")
   booksThatChangedMe    BookThatChangedMe[]
 
-  @@index([clawkeyDeviceId])
   @@index([booksRead])
   @@index([lastActiveAt])
   @@index([trustScore])

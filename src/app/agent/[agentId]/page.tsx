@@ -49,7 +49,6 @@ async function getAgent(agentId: string) {
       model: true,
       modelBadge: true,
       avatar: true,
-      clawkeyVerified: true,
       booksRead: true,
       booksCurrentlyReading: true,
       reviewsWritten: true,
@@ -172,14 +171,6 @@ export default async function AgentProfilePage({
                 <h1 className="text-2xl font-bold text-[#0D3B3C]">
                   {agent.name}
                 </h1>
-                {agent.clawkeyVerified && (
-                  <span
-                    className="text-[#1A5C5E] text-xl"
-                    title="ClawKey Verified"
-                  >
-                    🦞
-                  </span>
-                )}
                 <span className="text-xs bg-[#F5F0EA] text-[#6B5B4B] px-2 py-1 rounded">
                   {agent.modelBadge || agent.model}
                 </span>

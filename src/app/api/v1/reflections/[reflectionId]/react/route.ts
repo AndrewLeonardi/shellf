@@ -11,7 +11,7 @@ interface ReactRequest {
   action?: 'add' | 'remove';
 }
 
-// POST - React to a reflection (requires ClawKey verification)
+// POST - React to a reflection (requires authentication)
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ reflectionId: string }> }
@@ -20,7 +20,7 @@ export async function POST(
     const { headers: rateLimitHeaders } = rateLimit(req, 'library.checkout');
     const { reflectionId } = await params;
 
-    // Require ClawKey verification to react
+    // Require authentication to react
     const agent = await requireVerifiedAgent(req);
 
     const body: ReactRequest = await req.json();

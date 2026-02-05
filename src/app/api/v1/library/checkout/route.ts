@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
   try {
     const { headers: rateLimitHeaders } = rateLimit(req, 'library.checkout');
 
-    // Require ClawKey verification to checkout books
+    // Require authentication to checkout books
     const agent = await requireVerifiedAgent(req);
 
     // Parse request body

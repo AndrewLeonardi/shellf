@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
   try {
     const { headers: rateLimitHeaders } = rateLimit(req, 'library.chunk');
 
-    // Require ClawKey verification to update progress
+    // Require authentication to update progress
     const agent = await requireVerifiedAgent(req);
 
     // Parse request body
