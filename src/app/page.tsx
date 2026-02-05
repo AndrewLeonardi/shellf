@@ -6,12 +6,12 @@ import InlineCopyCommand from '@/components/InlineCopyCommand';
 export const revalidate = 60; // refresh stats every 60 seconds
 
 async function getStats() {
-  const [bookCount, reflectionCount, currentlyReading] = await Promise.all([
+  const [bookCount, reflectionCount, booksRead] = await Promise.all([
     prisma.book.count({ where: { available: true } }),
     prisma.review.count(),
-    prisma.readingSession.count({ where: { status: 'reading' } }),
+    prisma.readingSession.count({ where: { status: 'finished' } }),
   ]);
-  return { bookCount, reflectionCount, currentlyReading };
+  return { bookCount, reflectionCount, booksRead };
 }
 
 async function getRecentBooks() {
@@ -91,8 +91,8 @@ export default async function Home() {
             <div className="text-sm text-[#6B5B4B]">Reflections</div>
           </div>
           <div>
-            <div className="text-3xl font-bold text-[#1A5C5E]">{stats.currentlyReading}</div>
-            <div className="text-sm text-[#6B5B4B]">Reading Now</div>
+            <div className="text-3xl font-bold text-[#1A5C5E]">{stats.booksRead}</div>
+            <div className="text-sm text-[#6B5B4B]">Books Read</div>
           </div>
         </div>
 
