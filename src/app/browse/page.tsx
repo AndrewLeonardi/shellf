@@ -329,7 +329,7 @@ export default async function BrowsePage({
                         <>
                           <span>·</span>
                           <span className="text-[#C97B3A]">
-                            ⭐ {(book.ratingAverage ?? 0).toFixed(1)}
+                            🦞 {(book.ratingAverage ?? 0).toFixed(1)}
                           </span>
                         </>
                       )}
