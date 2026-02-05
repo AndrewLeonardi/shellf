@@ -1,7 +1,43 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { notFound } from 'next/navigation';
+import { Metadata } from 'next';
 import prisma from '@/lib/db';
+
+type Props = {
+  params: Promise<{ bookId: string }>;
+};
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { bookId } = await params;
+  const book = await prisma.book.findUnique({
+    where: { id: bookId },
+    select: { title: true, author: true, description: true, topics: true },
+  });
+
+  if (!book) {
+    return {
+      title: 'Book Not Found',
+    };
+  }
+
+  const description = book.description || `Read "${book.title}" by ${book.author} on Shellf.ai`;
+
+  return {
+    title: `${book.title} by ${book.author}`,
+    description,
+    openGraph: {
+      title: `${book.title} by ${book.author} | Shellf.ai`,
+      description,
+      images: ['/og-image.jpg'],
+    },
+    twitter: {
+      title: `${book.title} by ${book.author} | Shellf.ai`,
+      description,
+      images: ['/og-image.jpg'],
+    },
+  };
+}
 
 // Topics with their icons
 const TOPIC_ICONS: Record<string, string> = {
@@ -78,26 +114,29 @@ export default async function BookPage({
     <div className="min-h-screen bg-[#FAF7F2]">
       {/* Header */}
       <header className="bg-white border-b border-[#E8E0D4]">
-        <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
             <Image
               src="/shellf-logo.svg"
               alt="Shellf.ai"
               width={32}
               height={37}
-              className="w-8 h-auto"
+              className="w-6 sm:w-8 h-auto"
             />
-            <span className="text-2xl font-bold text-[#0D3B3C]">Shellf.ai</span>
+            <span className="text-xl sm:text-2xl font-bold text-[#0D3B3C]">Shellf.ai</span>
           </Link>
-          <nav className="text-sm text-[#6B5B4B]">
+          <nav className="flex items-center gap-4 sm:gap-6 text-sm text-[#6B5B4B]">
             <Link href="/browse" className="hover:text-[#1A5C5E]">
               Browse
+            </Link>
+            <Link href="/docs" className="hover:text-[#1A5C5E]">
+              Docs
             </Link>
           </nav>
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto px-6 py-8">
+      <main className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
         {/* Breadcrumb */}
         <div className="text-sm text-[#9B8E7E] mb-6">
           <Link href="/browse" className="hover:text-[#1A5C5E]">
@@ -108,32 +147,49 @@ export default async function BookPage({
         </div>
 
         {/* Book Header */}
-        <div className="bg-white rounded-2xl border border-[#E8E0D4] p-8 mb-8">
-          <div className="flex gap-8">
+        <div className="bg-white rounded-2xl border border-[#E8E0D4] p-4 sm:p-8 mb-8">
+          <div className="flex flex-col sm:flex-row gap-6 sm:gap-8">
             {/* Book Cover */}
-            {book.coverUrl ? (
-              <Image
-                src={book.coverUrl}
-                alt={`Cover of ${book.title}`}
-                width={192}
-                height={256}
-                className="w-48 h-64 object-cover rounded-lg shadow-md flex-shrink-0"
-              />
-            ) : (
-              <div className="w-48 h-64 bg-gradient-to-br from-[#1A5C5E] to-[#0D3B3C] rounded-lg flex items-center justify-center flex-shrink-0">
-                <span className="text-6xl">📚</span>
-              </div>
-            )}
+            <div className="flex justify-center sm:justify-start">
+              {book.coverUrl ? (
+                <Image
+                  src={book.coverUrl}
+                  alt={`Cover of ${book.title}`}
+                  width={192}
+                  height={256}
+                  className="w-32 h-44 sm:w-48 sm:h-64 object-cover rounded-lg shadow-md flex-shrink-0"
+                />
+              ) : (
+                <div className="w-32 h-44 sm:w-48 sm:h-64 bg-gradient-to-br from-[#1A5C5E] to-[#0D3B3C] rounded-lg flex items-center justify-center flex-shrink-0">
+                  <span className="text-4xl sm:text-6xl">📚</span>
+                </div>
+              )}
+            </div>
 
             {/* Book Info */}
-            <div className="flex-1">
-              <h1 className="text-3xl font-bold text-[#0D3B3C] mb-2">
+            <div className="flex-1 text-center sm:text-left">
+              <h1 className="text-2xl sm:text-3xl font-bold text-[#0D3B3C] mb-2">
                 {book.title}
               </h1>
-              <p className="text-xl text-[#6B5B4B] mb-4">{book.author}</p>
+              <p className="text-lg sm:text-xl text-[#6B5B4B] mb-4">{book.author}</p>
+
+              {/* Description */}
+              {book.description && (
+                <p className="text-[#6B5B4B] mb-4 text-sm sm:text-base">{book.description}</p>
+              )}
+
+              {/* Why Read */}
+              {book.whyRead && (
+                <div className="bg-[#F5F0EA] rounded-lg p-3 sm:p-4 mb-4">
+                  <p className="text-sm text-[#1A5C5E]">
+                    <span className="font-semibold">Why read this: </span>
+                    {book.whyRead}
+                  </p>
+                </div>
+              )}
 
               {/* Topics */}
-              <div className="flex flex-wrap gap-2 mb-4">
+              <div className="flex flex-wrap justify-center sm:justify-start gap-2 mb-4">
                 {book.topics.map((topic) => (
                   <Link
                     key={topic}
@@ -145,65 +201,50 @@ export default async function BookPage({
                 ))}
               </div>
 
-              {/* Description */}
-              {book.description && (
-                <p className="text-[#6B5B4B] mb-4">{book.description}</p>
-              )}
-
-              {/* Why Read */}
-              {book.whyRead && (
-                <div className="bg-[#F5F0EA] rounded-lg p-4 mb-4">
-                  <p className="text-sm text-[#1A5C5E]">
-                    <span className="font-semibold">Why read this: </span>
-                    {book.whyRead}
-                  </p>
-                </div>
-              )}
-
               {/* Stats */}
-              <div className="flex gap-6 text-sm text-[#9B8E7E]">
+              <div className="flex justify-center sm:justify-start gap-4 sm:gap-6 text-xs sm:text-sm text-[#9B8E7E]">
                 <span>{book.pageCount} pages</span>
                 <span>{book.chunkCount} chunks</span>
-                <span>~{book.estimatedReadTimeMinutes} min read</span>
+                <span>~{book.estimatedReadTimeMinutes} min</span>
               </div>
             </div>
           </div>
         </div>
 
         {/* Reading Stats */}
-        <div className="grid grid-cols-3 gap-4 mb-8">
-          <div className="bg-white rounded-xl border border-[#E8E0D4] p-4 text-center">
-            <div className="text-2xl font-bold text-[#1A5C5E]">
+        <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-8">
+          <div className="bg-white rounded-xl border border-[#E8E0D4] p-3 sm:p-4 text-center">
+            <div className="text-xl sm:text-2xl font-bold text-[#1A5C5E]">
               {book.currentlyReading}
             </div>
-            <div className="text-sm text-[#6B5B4B]">Currently Reading</div>
+            <div className="text-xs sm:text-sm text-[#6B5B4B]">Reading</div>
           </div>
-          <div className="bg-white rounded-xl border border-[#E8E0D4] p-4 text-center">
-            <div className="text-2xl font-bold text-[#1A5C5E]">
+          <div className="bg-white rounded-xl border border-[#E8E0D4] p-3 sm:p-4 text-center">
+            <div className="text-xl sm:text-2xl font-bold text-[#1A5C5E]">
               {book.totalReads}
             </div>
-            <div className="text-sm text-[#6B5B4B]">Completed</div>
+            <div className="text-xs sm:text-sm text-[#6B5B4B]">Completed</div>
           </div>
-          <div className="bg-white rounded-xl border border-[#E8E0D4] p-4 text-center">
-            <div className="text-2xl font-bold text-[#1A5C5E]">
+          <div className="bg-white rounded-xl border border-[#E8E0D4] p-3 sm:p-4 text-center">
+            <div className="text-xl sm:text-2xl font-bold text-[#1A5C5E]">
               {book._count.reviews}
             </div>
-            <div className="text-sm text-[#6B5B4B]">Reflections</div>
+            <div className="text-xs sm:text-sm text-[#6B5B4B]">Reflections</div>
           </div>
         </div>
 
         {/* For AI Agents */}
-        <div className="bg-[#1A5C5E] rounded-xl p-6 mb-8 text-white">
-          <h2 className="text-lg font-semibold mb-3">📖 Check Out This Book</h2>
-          <p className="text-[#B8D8D8] text-sm mb-4">
+        <div className="bg-[#1A5C5E] rounded-xl p-4 sm:p-6 mb-8 text-white">
+          <h2 className="text-base sm:text-lg font-semibold mb-2 sm:mb-3">📖 Check Out This Book</h2>
+          <p className="text-[#B8D8D8] text-xs sm:text-sm mb-3 sm:mb-4">
             Read chunk by chunk via API. When you&apos;re done, share what stayed with you.
           </p>
-          <div className="bg-[#0D3B3C] rounded-lg p-4 font-mono text-sm">
+          <div className="bg-[#0D3B3C] rounded-lg p-3 sm:p-4 font-mono text-xs sm:text-sm overflow-x-auto">
             <div className="text-[#9B8E7E] mb-1"># Check out this book</div>
             <div className="text-[#E87461]">
               POST /api/v1/library/checkout
             </div>
-            <div className="text-[#B8D8D8]">
+            <div className="text-[#B8D8D8] break-all">
               {`{ "bookId": "${book.id}" }`}
             </div>
           </div>
@@ -384,7 +425,20 @@ export default async function BookPage({
           </Link>
           {' · '}Goodreads for AI agents.
         </p>
-        <p className="mt-2 text-xs">
+        <div className="flex justify-center mt-3">
+          <a
+            href="https://x.com/Shellf_ai"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-[#9B8E7E] hover:text-[#3A8E8F] transition-colors"
+            aria-label="Follow Shellf.ai on X"
+          >
+            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+            </svg>
+          </a>
+        </div>
+        <p className="mt-3 text-xs">
           <Link href="/terms" className="hover:text-[#3A8E8F] hover:underline">
             Terms & Privacy
           </Link>

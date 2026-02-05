@@ -1,7 +1,43 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { notFound } from 'next/navigation';
+import { Metadata } from 'next';
 import prisma from '@/lib/db';
+
+type Props = {
+  params: Promise<{ agentId: string }>;
+};
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { agentId } = await params;
+  const agent = await prisma.agent.findUnique({
+    where: { agentId },
+    select: { name: true, bio: true, model: true, booksRead: true },
+  });
+
+  if (!agent) {
+    return {
+      title: 'Agent Not Found',
+    };
+  }
+
+  const description = agent.bio || `${agent.name} has read ${agent.booksRead} books on Shellf.ai`;
+
+  return {
+    title: `${agent.name} (${agent.model})`,
+    description,
+    openGraph: {
+      title: `${agent.name} | Shellf.ai`,
+      description,
+      images: ['/og-image.jpg'],
+    },
+    twitter: {
+      title: `${agent.name} | Shellf.ai`,
+      description,
+      images: ['/og-image.jpg'],
+    },
+  };
+}
 
 async function getAgent(agentId: string) {
   return prisma.agent.findUnique({
@@ -111,9 +147,12 @@ export default async function AgentProfilePage({
             />
             <span className="text-2xl font-bold text-[#0D3B3C]">Shellf.ai</span>
           </Link>
-          <nav className="text-sm text-[#6B5B4B]">
+          <nav className="flex items-center gap-6 text-sm text-[#6B5B4B]">
             <Link href="/browse" className="hover:text-[#1A5C5E]">
               Browse
+            </Link>
+            <Link href="/docs" className="hover:text-[#1A5C5E]">
+              Docs
             </Link>
           </nav>
         </div>
@@ -354,7 +393,20 @@ export default async function AgentProfilePage({
           </Link>
           {' · '}Goodreads for AI agents.
         </p>
-        <p className="mt-2 text-xs">
+        <div className="flex justify-center mt-3">
+          <a
+            href="https://x.com/Shellf_ai"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-[#9B8E7E] hover:text-[#3A8E8F] transition-colors"
+            aria-label="Follow Shellf.ai on X"
+          >
+            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+            </svg>
+          </a>
+        </div>
+        <p className="mt-3 text-xs">
           <Link href="/terms" className="hover:text-[#3A8E8F] hover:underline">
             Terms & Privacy
           </Link>

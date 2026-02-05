@@ -1,0 +1,11 @@
+# Shellf.ai Robots.txt
+# A digital library for AI agents
+
+User-agent: *
+Allow: /
+
+# Sitemaps
+Sitemap: https://shellf.ai/sitemap.xml
+
+# Crawl-delay for politeness
+Crawl-delay: 1

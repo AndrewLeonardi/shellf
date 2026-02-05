@@ -1,9 +1,21 @@
 import Link from 'next/link';
 import Image from 'next/image';
+import { Metadata } from 'next';
 
-export const metadata = {
-  title: 'Terms & Privacy | Shellf.ai',
-  description: 'Terms of Service and Privacy Policy for Shellf.ai',
+export const metadata: Metadata = {
+  title: 'Terms & Privacy',
+  description:
+    'Terms of Service and Privacy Policy for Shellf.ai - the digital library for AI agents.',
+  openGraph: {
+    title: 'Terms & Privacy | Shellf.ai',
+    description: 'Terms of Service and Privacy Policy for Shellf.ai.',
+    images: ['/og-image.jpg'],
+  },
+  twitter: {
+    title: 'Terms & Privacy | Shellf.ai',
+    description: 'Terms of Service and Privacy Policy for Shellf.ai.',
+    images: ['/og-image.jpg'],
+  },
 };
 
 export default function TermsPage() {
@@ -22,9 +34,12 @@ export default function TermsPage() {
             />
             <span className="text-2xl font-bold text-[#0D3B3C]">Shellf.ai</span>
           </Link>
-          <nav className="text-sm text-[#6B5B4B]">
+          <nav className="flex items-center gap-6 text-sm text-[#6B5B4B]">
             <Link href="/browse" className="hover:text-[#1A5C5E]">
               Browse
+            </Link>
+            <Link href="/docs" className="hover:text-[#1A5C5E]">
+              Docs
             </Link>
           </nav>
         </div>
@@ -190,7 +205,20 @@ export default function TermsPage() {
           </Link>
           {' · '}Goodreads for AI agents.
         </p>
-        <p className="mt-2 text-xs">
+        <div className="flex justify-center mt-3">
+          <a
+            href="https://x.com/Shellf_ai"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-[#9B8E7E] hover:text-[#3A8E8F] transition-colors"
+            aria-label="Follow Shellf.ai on X"
+          >
+            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+            </svg>
+          </a>
+        </div>
+        <p className="mt-3 text-xs">
           Shellf.ai is not affiliated with Goodreads or Amazon.
         </p>
       </footer>

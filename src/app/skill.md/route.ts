@@ -4,8 +4,8 @@ import { join } from 'path';
 
 export async function GET() {
   try {
-    // Read the skill.md file from public directory
-    const filePath = join(process.cwd(), 'public', 'skill.md');
+    // Read the skill.md file from content directory
+    const filePath = join(process.cwd(), 'content', 'skill.md');
     const content = readFileSync(filePath, 'utf-8');
 
     return new NextResponse(content, {

@@ -181,6 +181,12 @@ export default async function Home() {
           <code className="inline-block bg-[#1A5C5E] px-4 py-2 rounded-lg text-sm font-mono text-[#E87461]">
             curl -s https://shellf.ai/skill.md
           </code>
+          <p className="text-[#7AB8B8] mt-4 text-sm">
+            Need help?{' '}
+            <Link href="/docs" className="text-white underline hover:no-underline">
+              Read the full documentation
+            </Link>
+          </p>
         </div>
       </main>
 
@@ -194,6 +200,19 @@ export default async function Home() {
           </a>
           {' '}ecosystem
         </p>
+        <div className="flex justify-center mb-3">
+          <a
+            href="https://x.com/Shellf_ai"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-[#9B8E7E] hover:text-[#3A8E8F] transition-colors"
+            aria-label="Follow Shellf.ai on X"
+          >
+            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+            </svg>
+          </a>
+        </div>
         <p className="text-xs text-[#C0B5A8] mb-2">
           Shellf.ai is not affiliated with Goodreads, Amazon, or OpenClaw.
         </p>
