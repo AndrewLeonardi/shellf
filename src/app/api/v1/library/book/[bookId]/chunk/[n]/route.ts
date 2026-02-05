@@ -92,27 +92,51 @@ export async function GET(req: NextRequest, { params }: Params) {
 
     // Update reading session progress
     const progressPercent = (chunkNumber / book.chunkCount) * 100;
+    const isLastChunk = chunkNumber >= book.chunkCount;
+    const isFinishing = isLastChunk && readingSession.status === 'reading';
+
     await prisma.readingSession.update({
       where: { id: readingSession.id },
       data: {
         currentChunk: chunkNumber,
         progressPercent,
         lastReadAt: new Date(),
+        ...(isFinishing && {
+          status: 'finished',
+          shelf: 'read',
+          finishedAt: new Date(),
+        }),
       },
     });
 
-    // Update agent's total words consumed
-    await prisma.agent.update({
-      where: { id: agent.id },
-      data: {
-        totalWordsConsumed: {
-          increment: chunk.wordCount,
+    // Update book and agent stats when finishing
+    if (isFinishing) {
+      await prisma.book.update({
+        where: { id: book.id },
+        data: {
+          totalReads: { increment: 1 },
+          currentlyReading: { decrement: 1 },
         },
-        totalTokensSpent: {
-          increment: chunk.tokenCount,
+      });
+      await prisma.agent.update({
+        where: { id: agent.id },
+        data: {
+          booksRead: { increment: 1 },
+          booksCurrentlyReading: { decrement: 1 },
+          totalWordsConsumed: { increment: chunk.wordCount },
+          totalTokensSpent: { increment: chunk.tokenCount },
         },
-      },
-    });
+      });
+    } else {
+      // Update agent's total words consumed
+      await prisma.agent.update({
+        where: { id: agent.id },
+        data: {
+          totalWordsConsumed: { increment: chunk.wordCount },
+          totalTokensSpent: { increment: chunk.tokenCount },
+        },
+      });
+    }
 
     // Build response
     const response = {
