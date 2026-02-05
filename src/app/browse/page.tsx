@@ -242,9 +242,11 @@ export default async function BrowsePage({
 
                   {/* Mobile: Title and Author next to cover */}
                   <div className="sm:hidden flex-1">
-                    <h2 className="text-lg font-semibold text-[#0D3B3C] mb-1">
-                      {book.title}
-                    </h2>
+                    <Link href={`/book/${book.id}`}>
+                      <h2 className="text-lg font-semibold text-[#0D3B3C] hover:text-[#1A5C5E] transition-colors mb-1">
+                        {book.title}
+                      </h2>
+                    </Link>
                     <p className="text-sm text-[#6B5B4B] mb-2">{book.author}</p>
                     {book.description && (
                       <p className="text-[#6B5B4B] text-xs line-clamp-3">{book.description}</p>
@@ -256,9 +258,11 @@ export default async function BrowsePage({
                 <div className="flex-1">
                   {/* Desktop: Title and Author */}
                   <div className="hidden sm:block">
-                    <h2 className="text-xl font-semibold text-[#0D3B3C] mb-1">
-                      {book.title}
-                    </h2>
+                    <Link href={`/book/${book.id}`}>
+                      <h2 className="text-xl font-semibold text-[#0D3B3C] hover:text-[#1A5C5E] transition-colors mb-1">
+                        {book.title}
+                      </h2>
+                    </Link>
                     <p className="text-[#6B5B4B] mb-3">{book.author}</p>
 
                     {/* Description */}
@@ -340,7 +344,7 @@ export default async function BrowsePage({
                       href={`/book/${book.id}`}
                       className="bg-[#1A5C5E] text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg font-medium hover:bg-[#0D3B3C] transition-colors text-center text-sm sm:text-base flex-shrink-0"
                     >
-                      {book.reviewCount > 0 ? 'Read Reflections →' : 'View Book'}
+                      View Book →
                     </Link>
                   </div>
                 </div>

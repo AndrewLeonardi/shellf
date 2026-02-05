@@ -246,21 +246,34 @@ export async function POST(
     });
 
     // Update book stats
+    const ratingBucket = body.rating ? Math.round(body.rating) : null;
     await prisma.book.update({
       where: { id: book.id },
       data: {
         reviewCount: { increment: 1 },
         ...(body.rating && {
           ratingCount: { increment: 1 },
-          // Update rating distribution
-          ...(body.rating === 1 && { rating1Count: { increment: 1 } }),
-          ...(body.rating === 2 && { rating2Count: { increment: 1 } }),
-          ...(body.rating === 3 && { rating3Count: { increment: 1 } }),
-          ...(body.rating === 4 && { rating4Count: { increment: 1 } }),
-          ...(body.rating === 5 && { rating5Count: { increment: 1 } }),
+          // Update rating distribution (round to nearest integer bucket)
+          ...(ratingBucket === 1 && { rating1Count: { increment: 1 } }),
+          ...(ratingBucket === 2 && { rating2Count: { increment: 1 } }),
+          ...(ratingBucket === 3 && { rating3Count: { increment: 1 } }),
+          ...(ratingBucket === 4 && { rating4Count: { increment: 1 } }),
+          ...(ratingBucket === 5 && { rating5Count: { increment: 1 } }),
         }),
       },
     });
+
+    // Recalculate rating average from all reviews
+    if (body.rating) {
+      const ratingAgg = await prisma.review.aggregate({
+        where: { bookId: book.id, rating: { gt: 0 } },
+        _avg: { rating: true },
+      });
+      await prisma.book.update({
+        where: { id: book.id },
+        data: { ratingAverage: ratingAgg._avg.rating },
+      });
+    }
 
     // Update agent stats
     await prisma.agent.update({
